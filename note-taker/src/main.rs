@@ -1,8 +1,11 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 
 #[derive(Debug)]
-struct  Notebook(Vec<Vec<String>>);
+struct  Notebook {
+    filename: String,
+    notes: Vec<Vec<String>>
+}
 
 fn main() {
     let filename = "samplenote".to_owned();
@@ -13,22 +16,44 @@ fn main() {
     contents.add("note4\nnote4".to_owned());
 
     contents.list();
+
+    contents.save();
 }
 
 impl Notebook {
+
+    fn save(&self) {
+        let fh = match File::create(&self.filename) {
+            Ok(fh) => fh,
+            Err(err) => panic!("Error: {err}!")
+        };
+
+        let mut writer = BufWriter::new(fh);
+        let mut cnt = 0;
+        for block in &self.notes {
+            cnt = cnt + 1;
+            for line in block {
+                write!(writer, "{}\n", line).expect("Error adding text to file");
+            }
+            if cnt < self.notes.len() {
+                write!(writer, "\n").expect("Error adding text to file");
+            }
+        }
+    }
+
     fn add(&mut self, string: String) {
         let lines = string.split("\n").map(|x| x.to_string()).collect();
-        self.0.push(lines);
+        self.notes.push(lines);
     }
 
     fn list(&self) {
         let mut cnt = 0;
-        for block in &self.0 {
+        for block in &self.notes {
             cnt = cnt + 1;
             for line in block {
                 println!("{}", line)
             }
-            if cnt < self.0.len() {
+            if cnt < self.notes.len() {
                 println!("------------------------------")
             }
         }
@@ -36,7 +61,7 @@ impl Notebook {
 
     fn from_file(path: String) -> Notebook {
         // Open the file
-        let file = File::open(path);
+        let file = File::open(&path);
         // Did we succeed?
         let buf_reader = match file {
             Ok(fh) => BufReader::new(fh),
@@ -65,6 +90,6 @@ impl Notebook {
             contents.push(block);
         }
 
-        Notebook(contents)
+        Notebook{filename: path, notes: contents}
     }
 }
