@@ -11,16 +11,26 @@ fn main() {
     let filename = "samplenote".to_owned();
 
     let mut contents = Notebook::from_file(filename);
-    contents.list();
 
     contents.add("note4\nnote4".to_owned());
 
     contents.list();
 
-    contents.save();
+    println!("{:?}", contents.search("nota1"));
+
+
+//    contents.save();
 }
 
 impl Notebook {
+
+    fn search(&self, query: &str) -> Vec<&Vec<String>> {
+        self.notes.iter().filter(|&n| Self::search_in_note(n, query)).collect()
+    }
+
+    fn search_in_note(note: &Vec<String>, query: &str) -> bool {
+        note.iter().any(|line| line.contains(query))
+    }
 
     fn save(&self) {
         let fh = match File::create(&self.filename) {
