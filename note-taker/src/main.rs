@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 
@@ -8,18 +9,27 @@ struct  Notebook {
 }
 
 fn main() {
-    let filename = "samplenote".to_owned();
+    let notebook =  Notebook::from_file("samplenote".to_owned());
 
-    let mut contents = Notebook::from_file(filename);
+    let args : Vec<String> = env::args().collect();
+    println!("{:?}", args);
+    match args.len() {
+        1 => show_usage(),
+        _ => handle_argument(&notebook,&args[1], &args[2..]),
+    }
+}
 
-    contents.add("note4\nnote4".to_owned());
+fn handle_argument(notebook: &Notebook, command: &String, args: &[String]) {
+    match command.as_str() {
+        "list"   if args.len() == 0 => notebook.list(),
+        "search" if args.len() == 1 => notebook.list_search(&args[0]),
+        _ => show_usage()
+    }
+}
 
-    contents.list();
 
-    println!("{:?}", contents.search("nota1"));
-
-
-//    contents.save();
+fn show_usage() {
+    todo!()
 }
 
 impl Notebook {
@@ -65,6 +75,26 @@ impl Notebook {
             }
             if cnt < self.notes.len() {
                 println!("------------------------------")
+            }
+        }
+    }
+
+    fn list_search(&self, query: &str) {
+        let hits = self.search(query);
+
+        if hits.len() == 0 {
+            println!("No results match '{query}'");
+        }
+        else {
+            let mut cnt = 0;
+            for &block in &hits {
+                cnt = cnt + 1;
+                for line in block {
+                    println!("{}", line)
+                }
+                if cnt < hits.len() {
+                    println!("------------------------------")
+                }
             }
         }
     }
